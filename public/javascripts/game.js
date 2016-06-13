@@ -40,6 +40,8 @@ window.onload = function() {
      game.state.add("GameOverScreen", gameOverScreen);
      game.state.start("Boot");
 }
+
+// Boot Scales the game 
 var boot = function(game){};
 boot.prototype = {
 	preload: function(){
@@ -52,6 +54,8 @@ boot.prototype = {
           this.game.state.start("Preload"); 
      }
 }
+
+// Preload gets any assets used in the game 
 var preload = function(game){};
 preload.prototype = {
      preload: function(){
@@ -74,6 +78,7 @@ preload.prototype = {
           this.game.state.start("TitleScreen")
      }
 }
+//Title screen renders main title screen 
 var titleScreen = function(game){};
 titleScreen.prototype = {
      create: function(){
@@ -98,6 +103,48 @@ titleScreen.prototype = {
           //game.state.start("PlayGame")
      }
 }
+// show user how to play game 
+var howToPlay = function(game){};
+howToPlay.prototype = {
+     create: function(){
+          var titleBG = game.add.tileSprite(0, 0, game.width, game.height,
+               "backsplash");
+          titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
+          document.body.style.background = "#"+titleBG.tint.toString(16);
+          game.add.bitmapText(game.width / 2, 120 , "font", "Move left / right",
+               60).anchor.x = 0.5;
+          game.add.bitmapText(game.width / 2, 200 , "font", "Tap, Click or SPACEBAR key", 36).anchor.x = 0.5;
+          game.add.bitmapText(game.width / 2, 400 , "font", "Move to the bottom",
+               60).anchor.x = 0.5;
+          game.add.bitmapText(game.width / 2, 480 , "font", "Swipe, Drag or SHIFT key", 36).anchor.x = 0.5;
+          var horizontalShip = game.add.sprite(game.width / 2 - 50, 260, "ship");
+          horizontalShip.anchor.set(0.5);
+          horizontalShip.scale.set(0.5);
+          var horizontalShipTween = game.add.tween(horizontalShip).to({
+               x: game.width / 2 + 50
+          }, 500, "Linear", true, 0, -1);
+          horizontalShipTween.yoyo(true);
+          var verticalShip = game.add.sprite(game.width / 2, 540, "ship");
+          verticalShip.anchor.set(0.5);
+          verticalShip.scale.set(0.5);
+          var verticalShipTween = game.add.tween(verticalShip).to({
+               y: 640
+          }, 500, "Linear", true, 0, -1);
+          var playButton = game.add.button(game.width / 2, game.height - 150,
+               "playbutton", this.startGame);
+          playButton.anchor.set(0.5);
+          var tween = game.add.tween(playButton).to({
+               width: 220,
+               height:220
+          }, 1500, "Linear", true, 0, -1);
+          tween.yoyo(true);
+     },
+     startGame: function(){
+          game.state.start("PlayGame");
+     }
+}
+
+//Play the actual game after pressing start 
 var playGame = function(game){};
 playGame.prototype = {
      create: function(){
@@ -280,6 +327,7 @@ playGame.prototype = {
 
 }
 
+// Load Game Over Screen
 var gameOverScreen = function(game){};
 gameOverScreen.prototype = {
      create: function(){
@@ -329,42 +377,3 @@ Barrier.prototype.update = function(){
      }
 }
 
-var howToPlay = function(game){};
-howToPlay.prototype = {
-     create: function(){
-          var titleBG = game.add.tileSprite(0, 0, game.width, game.height,
-               "backsplash");
-          titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
-          document.body.style.background = "#"+titleBG.tint.toString(16);
-          game.add.bitmapText(game.width / 2, 120 , "font", "Move left / right",
-               60).anchor.x = 0.5;
-          game.add.bitmapText(game.width / 2, 200 , "font", "Tap, Click or SPACEBAR key", 36).anchor.x = 0.5;
-          game.add.bitmapText(game.width / 2, 400 , "font", "Move to the bottom",
-               60).anchor.x = 0.5;
-          game.add.bitmapText(game.width / 2, 480 , "font", "Swipe, Drag or SHIFT key", 36).anchor.x = 0.5;
-          var horizontalShip = game.add.sprite(game.width / 2 - 50, 260, "ship");
-          horizontalShip.anchor.set(0.5);
-          horizontalShip.scale.set(0.5);
-          var horizontalShipTween = game.add.tween(horizontalShip).to({
-               x: game.width / 2 + 50
-          }, 500, "Linear", true, 0, -1);
-          horizontalShipTween.yoyo(true);
-          var verticalShip = game.add.sprite(game.width / 2, 540, "ship");
-          verticalShip.anchor.set(0.5);
-          verticalShip.scale.set(0.5);
-          var verticalShipTween = game.add.tween(verticalShip).to({
-               y: 640
-          }, 500, "Linear", true, 0, -1);
-          var playButton = game.add.button(game.width / 2, game.height - 150,
-               "playbutton", this.startGame);
-          playButton.anchor.set(0.5);
-          var tween = game.add.tween(playButton).to({
-width: 220,
-               height:220
-          }, 1500, "Linear", true, 0, -1);
-          tween.yoyo(true);
-     },
-     startGame: function(){
-          game.state.start("PlayGame");
-     }
-}
