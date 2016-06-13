@@ -1,9 +1,8 @@
 var game;
-
-var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a,
-0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
-
-var tunnelWidth = 256; 
+var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a, 0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
+var tunnelWidth = 320;
+var shipHorizontalSpeed = 100;
+var shipMoveDelay = 0; 
 
 window.onload = function() {
      game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -81,6 +80,23 @@ playGame.prototype = {
           this.ship.side = 0;
           this.ship.anchor.set(0.5);
           this.game.physics.enable(this.ship, Phaser.Physics.ARCADE);
+          this.ship.canMove = true;
+          game.input.onDown.add(this.moveShip, this);
+     },
+     moveShip: function(){
+          if(this.ship.canMove){
+               this.ship.canMove = false; 
+               this.ship.side = 1 - this.ship.side;
+               var horizontalTween = game.add.tween(this.ship).to({
+                    x: this.shipPositions[this.ship.side]
+               }, shipHorizontalSpeed, Phaser.Easing.Linear.None, true);
+               horizontalTween.onComplete.add(function(){
+                    game.time.events.add(shipMoveDelay, function(){
+                         this.ship.canMove = true;
+
+                    }, this);
+               },this);   
+          }
      }
 }
 var gameOverScreen = function(game){};
