@@ -14,6 +14,12 @@ var swipeDistance = 10;
 var barrierSpeed = 280;
 var barrierGap = 120; 
 
+// increase difficulty 
+var barrierIncreaseSpeed = 1.1;
+
+//Ship invulnerability time on swipe 
+var shipInvisibilityTime = 1000;
+
 
 window.onload = function() {
      game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -166,8 +172,8 @@ playGame.prototype = {
                     this.restartShip();
                }
           }
-          if(!this.ship.destroyed){
-               game.physics.arcade.collide(this.ship, this.barrierGroup, function(s,b){
+          if(!this.ship.destroyed && this.ship.alpha === 1){
+               game.physics.arcade.collide(this.ship, this.barrierGroup, null, function(s,b){
                     this.ship.destroyed = true; 
                     this.smokeEmitter.destroy(); 
                     var destroyTween = game.add.tween(this.ship).to({
@@ -188,18 +194,25 @@ playGame.prototype = {
                          });
 
                     }, this)
-               }, null, this);     
+               }, this);     
           }
      }, 
      restartShip: function(){
-          this.ship.canSwipe = false;
-          this.verticalTween.stop();
-          this.verticalTween = game.add.tween(this.ship).to({
-          y: 860}, 100, Phaser.Easing.Linear.None, true);
-          this.verticalTween.onComplete.add(function(){
+          if(!this.ship.destroyed && this.ship.alpha === 1){
+               this.ship.canSwipe = false;
+               this.verticalTween.stop();
+               this.ship.alpha = 0.5; 
                this.verticalTween = game.add.tween(this.ship).to({
-               y: 0}, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
-          }, this);
+               y: 860}, 100, Phaser.Easing.Linear.None, true);
+               this.verticalTween.onComplete.add(function(){
+                    this.verticalTween = game.add.tween(this.ship).to({
+                    y: 0}, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
+                    var alphaTween = game.add.tween(this.ship).to({
+                         alpha: 1
+                    }, shipInvisibilityTime, Phaser.Easing.Bounce.In, true);
+               }, this);      
+          }
+          
      }
 
 }
@@ -207,7 +220,7 @@ playGame.prototype = {
 var gameOverScreen = function(game){};
 gameOverScreen.prototype = {
      create: function(){
-          console.log("game over ")
+          console.log("game over")
      }
 }
 
@@ -221,6 +234,7 @@ var Barrier = function (game, speed, tintColor) {
      this.anchor.set(position, 0.5);
      this.tint = tintColor;
      this.body.velocity.y = speed;
+     this.body.immovable = true;
      this.placeBarrier = true;
 };
 Barrier.prototype = Object.create(Phaser.Sprite.prototype);
