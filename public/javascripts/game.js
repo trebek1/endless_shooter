@@ -99,6 +99,8 @@ titleScreen.prototype = {
 var playGame = function(game){};
 playGame.prototype = {
      create: function(){
+          score = 0; 
+
           //Create tunnel 
           var tintColor = bgColors[game.rnd.between(0, bgColors.length - 1)]
           var tunnelBG = game.add.tileSprite(0, 0, game.width, game.height,"tunnelbg");
@@ -148,6 +150,7 @@ playGame.prototype = {
                y:0
           }, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
           
+          this.scoreText = game.add.bitmapText(20, game.height - 90, "font", "0", 48);
           this.barrierGroup = game.add.group(); 
           this.addBarrier(this.barrierGroup, tintColor);
 
@@ -155,7 +158,8 @@ playGame.prototype = {
           this.highlightBar = game.add.tileSprite(game.width / 2, 0, tunnelWidth, scoreHeight, "smoke");
           this.highlightBar.anchor.set(0.5,0);
           this.highlightBar.alpha = 0.1; 
-          this.highlightBar.visible = false;      
+          this.highlightBar.visible = false; 
+          game.time.events.loop(250, this.updateScore, this);      
 
      },
 
@@ -250,6 +254,16 @@ playGame.prototype = {
                }, this);      
           }
           
+     },
+
+     updateScore: function(){
+          if(this.ship.alpha == 1 && !this.ship.destroyed){
+               if(this.ship.y < scoreHeight * scoreSegments.length){
+                    var row = Math.floor(this.ship.y / scoreHeight);
+                    score += scoreSegments[row];
+                    this.scoreText.text = score.toString();
+               }    
+          }
      }
 
 }
