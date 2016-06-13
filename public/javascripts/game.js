@@ -20,6 +20,10 @@ var barrierIncreaseSpeed = 1.1;
 //Ship invulnerability time on swipe 
 var shipInvisibilityTime = 1000;
 
+// Scoring 
+var scoreHeight = 100; 
+var scoreSegments = [100, 50, 25, 10, 5, 2, 1];
+
 
 window.onload = function() {
      game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -58,6 +62,8 @@ preload.prototype = {
           game.load.image("ship", "assets/sprites/ship.png");
           game.load.image("smoke", "assets/sprites/smoke.png");
           game.load.image("barrier", "assets/sprites/barrier.png");
+          game.load.image("separator", "assets/sprites/separator.png");
+          game.load.bitmapFont("font", "assets/fonts/font.png", "assets/fonts/font.fnt"); 
 
      },
      create: function(){
@@ -90,6 +96,7 @@ titleScreen.prototype = {
 var playGame = function(game){};
 playGame.prototype = {
      create: function(){
+          //Create tunnel 
           var tintColor = bgColors[game.rnd.between(0, bgColors.length - 1)]
           var tunnelBG = game.add.tileSprite(0, 0, game.width, game.height,"tunnelbg");
                tunnelBG.tint = tintColor;
@@ -98,6 +105,20 @@ playGame.prototype = {
           var rightWallBG = game.add.tileSprite((game.width + tunnelWidth)/2,0,game.width/2,game.height,"wall");
                rightWallBG.tint = tintColor;
                rightWallBG.tileScale.x = -1;
+
+          for(var i =1; i<= scoreSegments.length; i++){
+               var leftSeparator = game.add.sprite((game.width - tunnelWidth)/2, scoreHeight * i, 'separator');
+                    leftSeparator.tint = tintColor; 
+                    leftSeparator.anchor.set(1,0);
+               var rightSeparator = game.add.sprite((game.width + tunnelWidth)/2, scoreHeight * i, 'separator');
+                    rightSeparator.tint = tintColor; 
+               var posX = (game.width - tunnelWidth)/2 - leftSeparator.width/2;
+               if(i%2 === 0){
+                    posX = (game.width + tunnelWidth)/2 + leftSeparator.width/2; 
+               }
+               game.add.bitmapText(posX, scoreHeight*(i - 1) + scoreHeight/2 - 18 , 'font', scoreSegments[i - 1].toString(), 36).anchor.x = 0.5; 
+          }
+          //Create Ship positions 
           this.shipPositions = [(game.width - tunnelWidth) / 2 + 32, (game.width + tunnelWidth)/2-32];
           this.ship = game.add.sprite(this.shipPositions[0], 860, "ship");
           this.ship.side = 0;
@@ -199,6 +220,10 @@ playGame.prototype = {
      }, 
      restartShip: function(){
           if(!this.ship.destroyed && this.ship.alpha === 1){
+               barrierSpeed *= barrierIncreaseSpeed;
+               for(var i = 0; i<barrierGroup.length; i++){
+                    this.barrierGroup.getChildAt(i).body.velocity.y = barrierSpeed; 
+               }
                this.ship.canSwipe = false;
                this.verticalTween.stop();
                this.ship.alpha = 0.5; 
