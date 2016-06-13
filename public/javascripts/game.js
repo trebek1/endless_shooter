@@ -1,13 +1,24 @@
 var game;
+
+// colors for background tunnel 
 var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a, 0x588c73, 0x8c4646, 0x2a5b84, 0x73503c];
 var tunnelWidth = 320;
+
+// moving the ship 
 var shipHorizontalSpeed = 100;
 var shipMoveDelay = 0; 
 var shipVerticalSpeed = 15000;
 var swipeDistance = 10;
 
+// barriers 
+var barrierSpeed = 280;
+var barrierGap = 120; 
+
+
 window.onload = function() {
      game = new Phaser.Game(640, 960, Phaser.AUTO, "");
+     
+     // different game states 
      game.state.add("Boot", boot);
      game.state.add("Preload", preload);
      game.state.add("TitleScreen", titleScreen);
@@ -40,6 +51,8 @@ preload.prototype = {
           game.load.image('wall', "assets/sprites/wall.png");
           game.load.image("ship", "assets/sprites/ship.png");
           game.load.image("smoke", "assets/sprites/smoke.png");
+          game.load.image("barrier", "assets/sprites/barrier.png");
+
      },
      create: function(){
           this.game.state.start("TitleScreen")
@@ -103,7 +116,22 @@ playGame.prototype = {
           this.verticalTween = game.add.tween(this.ship).to({
                y:0
           }, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
+          
+          this.barrierGroup = game.add.group(); 
+          this.addBarrier(this.barrierGroup, tintColor);
+
+          // var barrier = new Barrier(game, barrierSpeed, tintColor); 
+          // game.add.existing(barrier); 
+          // this.barrierGroup.add(barrier);
+
      },
+
+     addBarrier: function(group, tintColor){
+          var barrier = new Barrier(game, barrierSpeed, tintColor);
+          game.add.existing(barrier); 
+          group.add(barrier);
+     },
+
      moveShip: function(){
          this.ship.canSwipe = true;
           if(this.ship.canMove){
@@ -153,4 +181,28 @@ playGame.prototype = {
 
 var gameOverScreen = function(game){};
 gameOverScreen.prototype = {
+}
+
+var Barrier = function (game, speed, tintColor) {
+     var positions = [(game.width - tunnelWidth) / 2, (game.width + tunnelWidth) / 2];
+     var position = game.rnd.between(0, 1);
+     Phaser.Sprite.call(this, game, positions[position], -100, "barrier");
+     var cropRect = new Phaser.Rectangle(0, 0, tunnelWidth / 2, 24);
+     this.crop(cropRect);
+     game.physics.enable(this, Phaser.Physics.ARCADE);
+     this.anchor.set(position, 0.5);
+     this.tint = tintColor;
+     this.body.velocity.y = speed;
+     this.placeBarrier = true;
+};
+Barrier.prototype = Object.create(Phaser.Sprite.prototype);
+Barrier.prototype.constructor = Barrier;
+Barrier.prototype.update = function(){
+     if(this.placeBarrier && this.y > barrierGap){
+          this.placeBarrier = false; 
+          playGame.prototype.addBarrier(this.parent, this.tint);
+     }
+     if(this.y > game.height){
+          this.destroy();
+     }
 }
