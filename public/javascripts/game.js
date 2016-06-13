@@ -3,6 +3,8 @@ var bgColors = [0xF16745, 0xFFC65D, 0x7BC8A4, 0x4CC3D9, 0x93648D, 0x7c786a, 0x58
 var tunnelWidth = 320;
 var shipHorizontalSpeed = 100;
 var shipMoveDelay = 0; 
+var shipVerticalSpeed = 15000;
+var swipeDistance = 10;
 
 window.onload = function() {
      game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -23,7 +25,8 @@ boot.prototype = {
           game.scale.pageAlignVertically = true; 
           game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL; 
           this.game.state.start("Preload"); 
-} }
+     }
+}
 var preload = function(game){};
 preload.prototype = {
      preload: function(){
@@ -36,6 +39,7 @@ preload.prototype = {
           game.load.image("tunnelbg", "assets/sprites/tunnelbg.png");
           game.load.image('wall', "assets/sprites/wall.png");
           game.load.image("ship", "assets/sprites/ship.png");
+          game.load.image("smoke", "assets/sprites/smoke.png");
      },
      create: function(){
           this.game.state.start("TitleScreen")
@@ -47,12 +51,12 @@ titleScreen.prototype = {
           //game.stage.backgroundColor = bgColors[game.rnd.between(0,bgColors.length - 1)];
                
           var titleBG = game.add.tileSprite(0,0,game.width,game.height,"backsplash");
-          titleBG.tint = bgColors[game.rnd.between(0, bgColors.length-1)];
+               titleBG.tint = bgColors[game.rnd.between(0, bgColors.length-1)];
 
           var title = game.add.image(game.width / 2, 210, "title");
-          title.anchor.set(0.5);
+               title.anchor.set(0.5);
           var playButton = game.add.button(game.width / 2, game.height - 150, "playbutton", this.startGame);
-          playButton.anchor.set(0.5);
+               playButton.anchor.set(0.5);
           var tween = game.add.tween(playButton).to({
                width: 220, 
                height: 220,
@@ -81,9 +85,27 @@ playGame.prototype = {
           this.ship.anchor.set(0.5);
           this.game.physics.enable(this.ship, Phaser.Physics.ARCADE);
           this.ship.canMove = true;
+          this.ship.canSwipe = false;
           game.input.onDown.add(this.moveShip, this);
+          game.input.onUp.add(function(){
+               this.ship.canSwipe = false;
+          }, this);
+
+          // Smoke Emitter 
+          this.smokeEmitter = game.add.emitter(this.ship.x, this.ship.y + 10, 20);
+          this.smokeEmitter.makeParticles("smoke");
+          this.smokeEmitter.setXSpeed(-15, 15);
+          this.smokeEmitter.setYSpeed(50, 150);
+          this.smokeEmitter.setAlpha(0.5, 1);
+          this.smokeEmitter.start(false, 1000, 40);
+
+          // vertical movement 
+          this.verticalTween = game.add.tween(this.ship).to({
+               y:0
+          }, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
      },
      moveShip: function(){
+         this.ship.canSwipe = true;
           if(this.ship.canMove){
                this.ship.canMove = false; 
                this.ship.side = 1 - this.ship.side;
@@ -96,9 +118,39 @@ playGame.prototype = {
 
                     }, this);
                },this);   
+               var ghostShip = game.add.sprite(this.ship.x, this.ship.y, "ship");
+                    ghostShip.alpha = 0.5;
+                    ghostShip.anchor.set(0.5);
+               var ghostTween = game.add.tween(ghostShip).to({
+                    alpha: 0
+               }, 500, Phaser.Easing.Linear.None, true)
+                    ghostTween.onComplete.add(function(){
+                    ghostShip.destroy();
+               });
           }
+     },
+     update: function(){
+          this.smokeEmitter.x = this.ship.x;
+          this.smokeEmitter.y = this.ship.y; 
+          if(this.ship.canSwipe){
+               if(Phaser.Point.distance(game.input.activePointer.positionDown, game.input.activePointer.position) > swipeDistance){
+                    this.restartShip();
+               }
+          }
+     }, 
+     restartShip: function(){
+          this.ship.canSwipe = false;
+          this.verticalTween.stop();
+          this.verticalTween = game.add.tween(this.ship).to({
+          y: 860}, 100, Phaser.Easing.Linear.None, true);
+          this.verticalTween.onComplete.add(function(){
+               this.verticalTween = game.add.tween(this.ship).to({
+               y: 0}, shipVerticalSpeed, Phaser.Easing.Linear.None, true);
+          }, this);
      }
+
 }
+
 var gameOverScreen = function(game){};
 gameOverScreen.prototype = {
 }
