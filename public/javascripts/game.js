@@ -24,6 +24,9 @@ var shipInvisibilityTime = 1000;
 var scoreHeight = 100; 
 var scoreSegments = [100, 50, 25, 10, 5, 2, 1];
 
+//Show total score 
+var score;
+
 
 window.onload = function() {
      game = new Phaser.Game(640, 960, Phaser.AUTO, "");
@@ -148,9 +151,11 @@ playGame.prototype = {
           this.barrierGroup = game.add.group(); 
           this.addBarrier(this.barrierGroup, tintColor);
 
-          // var barrier = new Barrier(game, barrierSpeed, tintColor); 
-          // game.add.existing(barrier); 
-          // this.barrierGroup.add(barrier);
+          // Highlight score section 
+          this.highlightBar = game.add.tileSprite(game.width / 2, 0, tunnelWidth, scoreHeight, "smoke");
+          this.highlightBar.anchor.set(0.5,0);
+          this.highlightBar.alpha = 0.1; 
+          this.highlightBar.visible = false;      
 
      },
 
@@ -194,7 +199,13 @@ playGame.prototype = {
                }
           }
           if(!this.ship.destroyed && this.ship.alpha === 1){
+               if(this.ship.y < scoreHeight * scoreSegments.length){
+                    this.highlightBar.visible = true; 
+                    var row = Math.floor(this.ship.y/ scoreHeight);
+                    this.highlightBar.y = row*scoreHeight; 
+               }
                game.physics.arcade.collide(this.ship, this.barrierGroup, null, function(s,b){
+                    this.highlightBar.visible = false;
                     this.ship.destroyed = true; 
                     this.smokeEmitter.destroy(); 
                     var destroyTween = game.add.tween(this.ship).to({
@@ -219,6 +230,7 @@ playGame.prototype = {
           }
      }, 
      restartShip: function(){
+          this.highlightBar.visible = false; 
           if(!this.ship.destroyed && this.ship.alpha === 1){
                barrierSpeed *= barrierIncreaseSpeed;
                for(var i = 0; i<barrierGroup.length; i++){
