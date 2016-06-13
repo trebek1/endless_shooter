@@ -36,6 +36,7 @@ window.onload = function() {
      game.state.add("Preload", preload);
      game.state.add("TitleScreen", titleScreen);
      game.state.add("PlayGame", playGame);
+     game.state.add("HowToPlay", howToPlay);
      game.state.add("GameOverScreen", gameOverScreen);
      game.state.start("Boot");
 }
@@ -93,13 +94,20 @@ titleScreen.prototype = {
           },
      
      startGame: function(){
-          game.state.start("PlayGame")
+          game.state.start("HowToPlay");
+          //game.state.start("PlayGame")
      }
 }
 var playGame = function(game){};
 playGame.prototype = {
      create: function(){
           score = 0; 
+
+          // Add Keyboard controls 
+          this.spacebar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+          this.spacebar.onDown.add(this.moveShip, this);
+          this.shift = game.input.keyboard.addKey(Phaser.Keyboard.SHIFT);
+          this.shift.onDown.add(this.restartShip, this); 
 
           //Create tunnel 
           var tintColor = bgColors[game.rnd.between(0, bgColors.length - 1)]
@@ -169,7 +177,11 @@ playGame.prototype = {
           group.add(barrier);
      },
 
-     moveShip: function(){
+     moveShip: function(e){
+          var isKeyboard = e instanceof Phaser.Key; 
+          if(!isKeyboard){
+               this.ship.canSwipe = true;
+          }
          this.ship.canSwipe = true;
           if(this.ship.canMove){
                this.ship.canMove = false; 
@@ -237,7 +249,7 @@ playGame.prototype = {
           this.highlightBar.visible = false; 
           if(!this.ship.destroyed && this.ship.alpha === 1){
                barrierSpeed *= barrierIncreaseSpeed;
-               for(var i = 0; i<barrierGroup.length; i++){
+               for(var i = 0; i<this.barrierGroup.length; i++){
                     this.barrierGroup.getChildAt(i).body.velocity.y = barrierSpeed; 
                }
                this.ship.canSwipe = false;
@@ -314,5 +326,45 @@ Barrier.prototype.update = function(){
      }
      if(this.y > game.height){
           this.destroy();
+     }
+}
+
+var howToPlay = function(game){};
+howToPlay.prototype = {
+     create: function(){
+          var titleBG = game.add.tileSprite(0, 0, game.width, game.height,
+               "backsplash");
+          titleBG.tint = bgColors[game.rnd.between(0, bgColors.length - 1)];
+          document.body.style.background = "#"+titleBG.tint.toString(16);
+          game.add.bitmapText(game.width / 2, 120 , "font", "Move left / right",
+               60).anchor.x = 0.5;
+          game.add.bitmapText(game.width / 2, 200 , "font", "Tap, Click or SPACEBAR key", 36).anchor.x = 0.5;
+          game.add.bitmapText(game.width / 2, 400 , "font", "Move to the bottom",
+               60).anchor.x = 0.5;
+          game.add.bitmapText(game.width / 2, 480 , "font", "Swipe, Drag or SHIFT key", 36).anchor.x = 0.5;
+          var horizontalShip = game.add.sprite(game.width / 2 - 50, 260, "ship");
+          horizontalShip.anchor.set(0.5);
+          horizontalShip.scale.set(0.5);
+          var horizontalShipTween = game.add.tween(horizontalShip).to({
+               x: game.width / 2 + 50
+          }, 500, "Linear", true, 0, -1);
+          horizontalShipTween.yoyo(true);
+          var verticalShip = game.add.sprite(game.width / 2, 540, "ship");
+          verticalShip.anchor.set(0.5);
+          verticalShip.scale.set(0.5);
+          var verticalShipTween = game.add.tween(verticalShip).to({
+               y: 640
+          }, 500, "Linear", true, 0, -1);
+          var playButton = game.add.button(game.width / 2, game.height - 150,
+               "playbutton", this.startGame);
+          playButton.anchor.set(0.5);
+          var tween = game.add.tween(playButton).to({
+width: 220,
+               height:220
+          }, 1500, "Linear", true, 0, -1);
+          tween.yoyo(true);
+     },
+     startGame: function(){
+          game.state.start("PlayGame");
      }
 }
