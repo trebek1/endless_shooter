@@ -95,6 +95,7 @@ playGame.prototype = {
           this.shipPositions = [(game.width - tunnelWidth) / 2 + 32, (game.width + tunnelWidth)/2-32];
           this.ship = game.add.sprite(this.shipPositions[0], 860, "ship");
           this.ship.side = 0;
+          this.ship.destroyed = false;
           this.ship.anchor.set(0.5);
           this.game.physics.enable(this.ship, Phaser.Physics.ARCADE);
           this.ship.canMove = true;
@@ -165,6 +166,30 @@ playGame.prototype = {
                     this.restartShip();
                }
           }
+          if(!this.ship.destroyed){
+               game.physics.arcade.collide(this.ship, this.barrierGroup, function(s,b){
+                    this.ship.destroyed = true; 
+                    this.smokeEmitter.destroy(); 
+                    var destroyTween = game.add.tween(this.ship).to({
+                         x: this.ship.x + game.rnd.between(-100,100), 
+                         y: this.ship.y - 100,
+                         rotation: 10
+                    }, 1000, Phaser.Easing.Linear.None, true);
+                    destroyTween.onComplete.add(function(){
+                         var explosionEmitter = game.add.emitter(this.ship.x, this.ship.y, 200);
+                         explosionEmitter.makeParticles('smoke');
+                         explosionEmitter.setAlpha(0.5,1);
+                         explosionEmitter.minParticleScale = 0.5; 
+                         explosionEmitter.maxParticleScale = 2; 
+                         explosionEmitter.start(true, 2000, null, 200);
+                         this.ship.destroy(); 
+                         game.time.events.add(Phaser.Timer.SECOND*2, function(){
+                              game.state.start("GameOverScreen");
+                         });
+
+                    }, this)
+               }, null, this);     
+          }
      }, 
      restartShip: function(){
           this.ship.canSwipe = false;
@@ -181,6 +206,9 @@ playGame.prototype = {
 
 var gameOverScreen = function(game){};
 gameOverScreen.prototype = {
+     create: function(){
+          console.log("game over ")
+     }
 }
 
 var Barrier = function (game, speed, tintColor) {
